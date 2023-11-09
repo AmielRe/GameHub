@@ -8,6 +8,6 @@ namespace Common.Messages
 {
     public interface IMessage
     {
-        void Handle();
+        void Handle(dynamic message);
     }
 }

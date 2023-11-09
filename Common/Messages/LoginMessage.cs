@@ -12,7 +12,7 @@ namespace Common.Messages
     {
         public LoginMessage() { }
 
-        public void Handle()
+        public void Handle(dynamic message)
         {
             throw new NotImplementedException();
         }

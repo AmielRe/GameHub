@@ -11,7 +11,7 @@ namespace Common.Messages
     internal class SendGiftMessage : IMessage
     {
         public SendGiftMessage() { }
-        public void Handle()
+        public void Handle(dynamic message)
         {
             throw new NotImplementedException();
         }
