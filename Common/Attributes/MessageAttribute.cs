@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common.Attributes
+﻿namespace Common.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    sealed class MessageAttribute : Attribute
+    public class MessageAttribute : Attribute
     {
         public string MessageType { get; }
 

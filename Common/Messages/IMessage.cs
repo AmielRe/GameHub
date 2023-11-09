@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Common.Messages
 {
-    internal interface IMessage
+    public interface IMessage
     {
         void Handle();
     }
