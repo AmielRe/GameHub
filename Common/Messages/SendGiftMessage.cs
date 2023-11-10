@@ -3,10 +3,10 @@
 namespace Common.Messages
 {
     [Message("SendGift")]
-    public class SendGiftMessage : IMessage
+    public class SendGiftMessage : Message
     {
-        public SendGiftMessage() { }
-        public void Handle(dynamic message)
+        public SendGiftMessage() : base("SendGift") { }
+        override public void Handle(dynamic message)
         {
             Console.WriteLine(message.type);
         }

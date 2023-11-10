@@ -89,7 +89,7 @@ namespace GameHubClient
         {
             // Parse the incoming message to determine the command type
             dynamic msgObject = Newtonsoft.Json.JsonConvert.DeserializeObject(msg);
-            string commandType = msgObject.type;
+            string commandType = msgObject.MsgType;
 
             // Find the command type based on the custom attribute
             var commandTypeToExecute = _messageTypes.FirstOrDefault(type =>

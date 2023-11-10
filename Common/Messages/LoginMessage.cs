@@ -3,11 +3,11 @@
 namespace Common.Messages
 {
     [Message("Login")]
-    public class LoginMessage : IMessage
+    public class LoginMessage : Message
     {
-        public LoginMessage() { }
+        public LoginMessage() : base("Login") { }
 
-        public void Handle(dynamic message)
+        override public void Handle(dynamic message)
         {
             Console.WriteLine(message.type);
         }
