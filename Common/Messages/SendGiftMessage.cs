@@ -1,14 +1,20 @@
 ﻿using Common.Attributes;
+using System.Net.WebSockets;
 
 namespace Common.Messages
 {
     [Message("SendGift")]
     public class SendGiftMessage : Message
     {
-        public SendGiftMessage() : base("SendGift") { }
-        override public void Handle(dynamic message)
+        public SendGiftMessage() { }
+        override public void Handle(WebSocket returnWebSocket)
         {
-            Console.WriteLine(message.type);
+            throw new NotImplementedException();
+        }
+
+        public override void InitializeParams(dynamic message)
+        {
+            throw new NotImplementedException();
         }
     }
 }

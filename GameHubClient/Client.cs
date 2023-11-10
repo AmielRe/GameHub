@@ -17,7 +17,8 @@ namespace GameHubClient
 
             while (true)
             {
-                Console.Clear();
+                //Console.Clear();
+                Console.WriteLine();
                 Console.WriteLine("Menu:");
                 Console.WriteLine("1. Login");
                 Console.WriteLine("2. Update Resources");
@@ -30,11 +31,14 @@ namespace GameHubClient
                     switch (choice)
                     {
                         case 1:
-                            LoginMessage login = new LoginMessage();
+                            string ipAddress = NetworkUtils.GetIPv4Address();
+                            LoginMessage login = new LoginMessage(ipAddress);
 
                             string loginMsg = JsonConvert.SerializeObject(login);
 
                             await CommunicationUtils.Send(webSocket, loginMsg);
+
+                            playerId = CommunicationUtils.Receive(webSocket).Result;
                             break;
                         case 2:
                             if(playerId != null)
