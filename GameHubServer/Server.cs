@@ -19,6 +19,7 @@ namespace GameHubClient
         private CancellationTokenSource _cts;
         private Dictionary<int, WebSocket> _connectedClients = new Dictionary<int, WebSocket>();
         private List<Type> _messageTypes;
+        private const string COMMON_ASSEMBLY_NAME = "Common";
 
         public Server(string url)
         {
@@ -27,7 +28,8 @@ namespace GameHubClient
             _cts = new CancellationTokenSource();
 
             // Get all available messages types
-            _messageTypes = Assembly.GetExecutingAssembly()
+            Assembly commonAssembly = Assembly.Load(COMMON_ASSEMBLY_NAME);
+            _messageTypes = commonAssembly
                     .GetTypes()
                     .Where(type => type.IsClass && !type.IsAbstract && type.GetCustomAttribute<MessageAttribute>() != null)
                     .ToList();
@@ -96,7 +98,7 @@ namespace GameHubClient
             if (commandTypeToExecute != null)
             {
                 // Create an instance of the command class and execute it
-                IMessage message = Activator.CreateInstance(commandTypeToExecute, msg) as IMessage;
+                IMessage message = Activator.CreateInstance(commandTypeToExecute) as IMessage;
                 message?.Handle(msgObject);
             }
             else
