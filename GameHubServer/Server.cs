@@ -70,7 +70,7 @@ namespace GameHubClient
                 while (!result.CloseStatus.HasValue)
                 {
                     string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    HandleWebSocketMessage(message);
+                    HandleWebSocketMessage(message, webSocket);
 
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cts.Token);
                 }
@@ -85,7 +85,7 @@ namespace GameHubClient
             }
         }
 
-        public void HandleWebSocketMessage(string msg)
+        public void HandleWebSocketMessage(string msg, WebSocket webSocket)
         {
             // Parse the incoming message to determine the command type
             dynamic msgObject = Newtonsoft.Json.JsonConvert.DeserializeObject(msg);
@@ -99,7 +99,8 @@ namespace GameHubClient
             {
                 // Create an instance of the command class and execute it
                 IMessage message = Activator.CreateInstance(commandTypeToExecute) as IMessage;
-                message?.Handle(msgObject);
+                message?.InitializeParams(msgObject);
+                message?.Handle(webSocket);
             }
             else
             {

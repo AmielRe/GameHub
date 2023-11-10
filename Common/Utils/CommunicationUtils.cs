@@ -5,7 +5,7 @@ namespace Common.Utils
 {
     public static class CommunicationUtils
     {
-        public static async Task Send(ClientWebSocket webSocket, string message)
+        public static async Task Send(WebSocket webSocket, string message)
         {
             byte[] buffer = new UTF8Encoding().GetBytes(message);
 
@@ -14,7 +14,7 @@ namespace Common.Utils
             Console.WriteLine("Sent:     " + message);
         }
 
-        public static async Task<string> Receive(ClientWebSocket webSocket)
+        public static async Task<string> Receive(WebSocket webSocket)
         {
             byte[] buffer = new byte[1024];
 
