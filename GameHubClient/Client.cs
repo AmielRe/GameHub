@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Net.WebSockets;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Common.Utils;
-using System.Net;
 using Newtonsoft.Json;
+using Common.Messages;
 
 namespace GameHubClient
 {
@@ -31,26 +30,20 @@ namespace GameHubClient
                     switch (choice)
                     {
                         case 1:
-                            var loginMessage = new
-                            {
-                                type = "Login"
-                            };
+                            LoginMessage login = new LoginMessage();
 
-                            string loginJson = JsonConvert.SerializeObject(loginMessage);
+                            string loginMsg = JsonConvert.SerializeObject(login);
 
-                            await CommunicationUtils.Send(webSocket, loginJson);
+                            await CommunicationUtils.Send(webSocket, loginMsg);
                             break;
                         case 2:
                             if(playerId != null)
                             {
-                                var updateResourcesMessage = new
-                                {
-                                    type = "UpdateResources"
-                                };
+                                UpdateResourcesMessage updateResources = new UpdateResourcesMessage();
 
-                                string updateResourcesJson = JsonConvert.SerializeObject(updateResourcesMessage);
+                                string updateResourcesMsg = JsonConvert.SerializeObject(updateResources);
 
-                                await CommunicationUtils.Send(webSocket, updateResourcesJson);
+                                await CommunicationUtils.Send(webSocket, updateResourcesMsg);
                             }
                             else
                             {
@@ -60,14 +53,11 @@ namespace GameHubClient
                         case 3:
                             if (playerId != null)
                             {
-                                var sendGiftMessage = new
-                                {
-                                    type = "SendGift"
-                                };
+                                SendGiftMessage sendGift = new SendGiftMessage();
 
-                                string sendGiftJson = JsonConvert.SerializeObject(sendGiftMessage);
+                                string sendGiftMsg = JsonConvert.SerializeObject(sendGift);
 
-                                await CommunicationUtils.Send(webSocket, sendGiftJson);
+                                await CommunicationUtils.Send(webSocket, sendGiftMsg);
                             }
                             else
                             {

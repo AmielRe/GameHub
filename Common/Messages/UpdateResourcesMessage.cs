@@ -3,11 +3,11 @@
 namespace Common.Messages
 {
     [Message("UpdateResources")]
-    public class UpdateResourcesMessage : IMessage
+    public class UpdateResourcesMessage : Message
     {
-        public UpdateResourcesMessage() { }
+        public UpdateResourcesMessage() : base("UpdateResources") { }
 
-        public void Handle(dynamic message)
+        override public void Handle(dynamic message)
         {
             Console.WriteLine(message.type);
         }
