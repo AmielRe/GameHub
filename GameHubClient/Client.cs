@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Common.Utils;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace GameHubClient
 {
@@ -30,12 +31,26 @@ namespace GameHubClient
                     switch (choice)
                     {
                         case 1:
-                            await CommunicationUtils.Send(webSocket, "Login");
+                            var loginMessage = new
+                            {
+                                type = "Login"
+                            };
+
+                            string loginJson = JsonConvert.SerializeObject(loginMessage);
+
+                            await CommunicationUtils.Send(webSocket, loginJson);
                             break;
                         case 2:
                             if(playerId != null)
                             {
-                                await CommunicationUtils.Send(webSocket, "UpdateResources");
+                                var updateResourcesMessage = new
+                                {
+                                    type = "UpdateResources"
+                                };
+
+                                string updateResourcesJson = JsonConvert.SerializeObject(updateResourcesMessage);
+
+                                await CommunicationUtils.Send(webSocket, updateResourcesJson);
                             }
                             else
                             {
@@ -45,7 +60,14 @@ namespace GameHubClient
                         case 3:
                             if (playerId != null)
                             {
-                                await CommunicationUtils.Send(webSocket, "SendGift");
+                                var sendGiftMessage = new
+                                {
+                                    type = "SendGift"
+                                };
+
+                                string sendGiftJson = JsonConvert.SerializeObject(sendGiftMessage);
+
+                                await CommunicationUtils.Send(webSocket, sendGiftJson);
                             }
                             else
                             {
@@ -54,7 +76,7 @@ namespace GameHubClient
                             break;
                         case 4:
                             Console.WriteLine("Goodbye!");
-                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                            webSocket.Abort();
                             return; // Exit the program
                         default:
                             Console.WriteLine("Invalid choice. Please select a valid option (1-4).");
