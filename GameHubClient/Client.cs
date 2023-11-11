@@ -38,9 +38,15 @@ namespace GameHubClient
 
                             string loginMsg = JsonConvert.SerializeObject(login);
 
-                            await CommunicationUtils.Send(webSocket, loginMsg);
-
-                            playerId = CommunicationUtils.Receive(webSocket).Result;
+                            try
+                            {
+                                await CommunicationUtils.Send(webSocket, loginMsg);
+                                playerId = CommunicationUtils.Receive(webSocket).Result;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Communication error: {0}", ex.Message);
+                            }
                             break;
                         case 2:
                             if(playerId != null)
@@ -51,11 +57,15 @@ namespace GameHubClient
 
                                 string updateResourcesMsg = JsonConvert.SerializeObject(updateResources);
 
-                                Console.WriteLine(updateResourcesMsg);
-
-                                await CommunicationUtils.Send(webSocket, updateResourcesMsg);
-
-                                string newBalance = CommunicationUtils.Receive(webSocket).Result;
+                                try
+                                {
+                                    await CommunicationUtils.Send(webSocket, updateResourcesMsg);
+                                    string newBalance = CommunicationUtils.Receive(webSocket).Result;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Communication error: {0}", ex.Message);
+                                }
                             }
                             else
                             {
@@ -73,9 +83,15 @@ namespace GameHubClient
 
                                 string sendGiftMsg = JsonConvert.SerializeObject(sendGift);
 
-                                await CommunicationUtils.Send(webSocket, sendGiftMsg);
-
-                                string response = CommunicationUtils.Receive(webSocket).Result;
+                                try
+                                {
+                                    await CommunicationUtils.Send(webSocket, sendGiftMsg);
+                                    string response = CommunicationUtils.Receive(webSocket).Result;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Communication error: {0}", ex.Message);
+                                }
                             }
                             else
                             {
@@ -84,7 +100,7 @@ namespace GameHubClient
                             break;
                         case 4:
                             Console.WriteLine("Goodbye!");
-                            webSocket.Abort();
+                            await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
                             return; // Exit the program
                         default:
                             Console.WriteLine("Invalid choice. Please select a valid option (1-4).");
@@ -111,6 +127,7 @@ namespace GameHubClient
             catch (Exception ex)
             {
                 Console.WriteLine("Failed to connect to: {0} - {1}", uri, ex.Message);
+                throw;
             }
 
             return webSocket;

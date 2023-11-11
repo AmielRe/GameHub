@@ -7,29 +7,39 @@ namespace Common.Utils
     {
         public static async Task Send(WebSocket webSocket, string message)
         {
-            byte[] buffer = new UTF8Encoding().GetBytes(message);
-
-            await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, false, CancellationToken.None);
-
-            Console.WriteLine("Sent:     " + message);
+            try
+            {
+                byte[] buffer = new UTF8Encoding().GetBytes(message);
+                await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, false, CancellationToken.None);
+            }
+            catch (WebSocketException ex)
+            {
+                throw new WebSocketException($"WebSocket communication error during send: {ex.Message}");
+            }
         }
 
         public static async Task<string> Receive(WebSocket webSocket)
         {
-            byte[] buffer = new byte[1024];
-
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-            if (result.MessageType == WebSocketMessageType.Close)
+            try
             {
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                return string.Empty;
+                byte[] buffer = new byte[1024];
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    return string.Empty;
+                }
+                else
+                {
+                    return Encoding.UTF8.GetString(buffer, 0, result.Count).TrimEnd('\0');
+                }
             }
-            else
+            catch (WebSocketException ex)
             {
-                Console.WriteLine("Receive:  " + Encoding.UTF8.GetString(buffer).TrimEnd('\0'));
-                return Encoding.UTF8.GetString(buffer).TrimEnd('\0');
+                throw new WebSocketException($"WebSocket communication error during receive: {ex.Message}");
             }
         }
+
     }
 }
