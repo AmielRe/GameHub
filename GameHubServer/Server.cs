@@ -99,8 +99,7 @@ namespace GameHubClient
             {
                 // Create an instance of the command class and execute it
                 IMessage message = Activator.CreateInstance(commandTypeToExecute) as IMessage;
-                message?.InitializeParams(msgObject);
-                message?.Handle(webSocket);
+                message?.Handle(msgObject, webSocket);
             }
             else
             {
