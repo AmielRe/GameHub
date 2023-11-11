@@ -14,28 +14,45 @@ namespace Common.Messages
 
         public LoginMessage(string deviceId)
         {
+            if (string.IsNullOrEmpty(deviceId))
+            {
+                throw new ArgumentException("Device ID cannot be null or empty", nameof(deviceId));
+            }
+
             this.deviceId = deviceId;
         }
 
         override public void ProcessAndRespond(WebSocket returnWebSocket)
         {
-            PlayerState? playerState = GameData.GetUserByDeviceId(deviceId);
-            int playerId;
-
-            if (playerState != null)
+            try
             {
-                playerId = playerState.PlayerId;
-            }
-            else
-            {
-                playerId = GameData.AddUser(deviceId, returnWebSocket);
-            }
+                PlayerState? playerState = GameData.GetUserByDeviceId(deviceId);
+                int playerId;
 
-            _ = CommunicationUtils.Send(returnWebSocket, playerId.ToString());
+                if (playerState != null)
+                {
+                    playerId = playerState.PlayerId;
+                }
+                else
+                {
+                    playerId = GameData.AddUser(deviceId, returnWebSocket);
+                }
+
+                _ = CommunicationUtils.Send(returnWebSocket, playerId.ToString());
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error processing login message: {ex.Message}");
+            }
         }
 
         public override void InitializeParams(dynamic message)
         {
+            if (string.IsNullOrEmpty(Convert.ToString(message?.deviceId)))
+            {
+                throw new ArgumentException("Device ID is missing or invalid", nameof(message));
+            }
+
             deviceId = message.deviceId;
         }
     }

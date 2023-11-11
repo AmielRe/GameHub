@@ -15,6 +15,21 @@ namespace Common.Messages
 
         public SendGiftMessage(int friendPlayerId, ResourceType resourceType, int resourceValue)
         {
+            if (friendPlayerId < 0)
+            {
+                throw new ArgumentException("Friend player ID cannot be negative", nameof(friendPlayerId));
+            }
+
+            if (!Enum.IsDefined(typeof(ResourceType), resourceType))
+            {
+                throw new ArgumentException("Invalid resource type", nameof(resourceType));
+            }
+
+            if (resourceValue < 0)
+            {
+                throw new ArgumentException("Resource value cannot be negative", nameof(resourceValue));
+            }
+
             this.friendPlayerId = friendPlayerId;
             this.resourceType = resourceType;
             this.resourceValue = resourceValue;
@@ -24,6 +39,11 @@ namespace Common.Messages
 
         public override void InitializeParams(dynamic message)
         {
+            if (Convert.ToInt32(message?.friendPlayerId) < 0 || !Enum.IsDefined(typeof(ResourceType), message?.resourceType) || Convert.ToInt32(message?.resourceValue) < 0)
+            {
+                throw new ArgumentException("Invalid parameters for initializing SendGiftMessage", nameof(message));
+            }
+
             friendPlayerId = message.friendPlayerId;
             resourceType = message.resourceType;
             resourceValue = message.resourceValue;
@@ -31,20 +51,29 @@ namespace Common.Messages
 
         public override void ProcessAndRespond(WebSocket returnWebSocket)
         {
-            PlayerState? sendingUser = GameData.GetUserByWebSocket(returnWebSocket) ?? throw new Exception("Player was not found!");
-            
-            sendingUser.UpdateResource(resourceType, resourceValue * (-1));
-
-            PlayerState? recevingUser = GameData.GetUserByPlayerId(friendPlayerId) ?? throw new Exception($"Player {friendPlayerId} was not found!");
-
-            recevingUser.UpdateResource(resourceType, resourceValue);
-
-            if(recevingUser.WebSocket != null)
+            try
             {
-                _ = CommunicationUtils.Send(recevingUser.WebSocket, $"Hey! player {sendingUser.PlayerId} just sent you a gift!");
-            }
+                PlayerState? sendingUser = GameData.GetUserByWebSocket(returnWebSocket) ?? throw new Exception("Sending user was not found!");
+                if(!sendingUser.Resources.TryGetValue(resourceType, out int currentBalance) || (currentBalance - resourceValue >= 0))
+                {
+                    throw new InvalidOperationException("Invalid balance for required operation!");
+                }
+                sendingUser.UpdateResource(resourceType, resourceValue * (-1));
 
-            _ = CommunicationUtils.Send(returnWebSocket, $"Gift was sent successfully to player {friendPlayerId}");
+                PlayerState? receivingUser = GameData.GetUserByPlayerId(friendPlayerId) ?? throw new Exception($"Receiving user {friendPlayerId} was not found!");
+                receivingUser.UpdateResource(resourceType, resourceValue);
+
+                if (receivingUser.WebSocket != null)
+                {
+                    _ = CommunicationUtils.Send(receivingUser.WebSocket, $"Hey! Player {sendingUser.PlayerId} just sent you a gift!");
+                }
+
+                _ = CommunicationUtils.Send(returnWebSocket, $"Gift was sent successfully to player {friendPlayerId}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error processing send gift message: {ex.Message}");
+            }
         }
     }
 }

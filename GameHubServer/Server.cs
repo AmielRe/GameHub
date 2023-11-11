@@ -11,6 +11,7 @@ using System.Linq;
 using Common.Attributes;
 using Common.Messages;
 using Common;
+using Newtonsoft.Json;
 
 namespace GameHubClient
 {
@@ -37,24 +38,35 @@ namespace GameHubClient
 
         public async Task StartAsync()
         {
-            _httpListener.Start();
-            Console.WriteLine("Game Server is listening...");
-
-            while (true)
+            try
             {
-                var context = await _httpListener.GetContextAsync();
+                _httpListener.Start();
+                Console.WriteLine("Game Server is listening...");
 
-                if (context.Request.IsWebSocketRequest)
+                while (true)
                 {
-                    var wsContext = await context.AcceptWebSocketAsync(subProtocol: null);
+                    var context = await _httpListener.GetContextAsync();
 
-                    _ = Task.Run(async () => await HandleClient(wsContext.WebSocket));
+                    if (context.Request.IsWebSocketRequest)
+                    {
+                        var wsContext = await context.AcceptWebSocketAsync(subProtocol: null);
+
+                        _ = Task.Run(async () => await HandleClient(wsContext.WebSocket));
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.Close();
+                    }
                 }
-                else
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.Close();
-                }
+            }
+            catch (HttpListenerException ex)
+            {
+                Console.WriteLine($"HTTP Listener error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during server execution: {ex.Message}");
             }
         }
 
@@ -75,9 +87,13 @@ namespace GameHubClient
 
                 GameData.LogoutUser(webSocket);
             }
+            catch (WebSocketException ex)
+            {
+                Console.WriteLine($"WebSocket error: {ex.Message}");
+                GameData.LogoutUser(webSocket);
+            }
             catch (Exception ex)
             {
-                // Handle exceptions and disconnect client
                 Console.WriteLine($"Error: {ex.Message}");
                 GameData.LogoutUser(webSocket);
             }
@@ -85,28 +101,41 @@ namespace GameHubClient
 
         public void HandleWebSocketMessage(string msg, WebSocket webSocket)
         {
-            // Parse the incoming message to determine the command type
-            dynamic msgObject = Newtonsoft.Json.JsonConvert.DeserializeObject(msg);
-            string commandType = msgObject.MsgType;
-
-            // Find the command type based on the custom attribute
-            var commandTypeToExecute = _messageTypes.FirstOrDefault(type =>
-                type.GetCustomAttribute<MessageAttribute>().MessageType == commandType);
-
-            if (commandTypeToExecute != null)
+            try
             {
-                // Create an instance of the command class and execute it
-                IMessage message = Activator.CreateInstance(commandTypeToExecute) as IMessage;
-                message?.Handle(msgObject, webSocket);
+                // Parse the incoming message to determine the command type
+                dynamic msgObject = JsonConvert.DeserializeObject(msg);
+                string commandType = msgObject.MsgType;
+
+                // Find the command type based on the custom attribute
+                var commandTypeToExecute = _messageTypes.FirstOrDefault(type =>
+                    type.GetCustomAttribute<MessageAttribute>().MessageType == commandType);
+
+                if (commandTypeToExecute != null)
+                {
+                    // Create an instance of the command class and execute it
+                    IMessage message = Activator.CreateInstance(commandTypeToExecute) as IMessage;
+                    message?.Handle(msgObject, webSocket);
+                }
+                else
+                {
+                    // Handle unknown command types
+                    Console.WriteLine($"Unknown command type: {commandType}");
+                }
             }
-            else
+            catch (JsonException ex)
             {
-                // Handle unknown command types
+                Console.WriteLine($"Error deserializing JSON: {ex.Message}");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error handling incoming message: {ex.Message}");
             }
         }
 
         public void Stop()
         {
+            GameData.LogoutAllUsers();
             _httpListener.Stop();
             _cts?.Cancel();
         }

@@ -33,7 +33,7 @@ namespace Common
         {
             if (string.IsNullOrEmpty(deviceId))
             {
-                throw new ArgumentException("Argument is invalid");
+                throw new ArgumentNullException("Argument is invalid");
             }
 
             // Check if the player is already connected
@@ -54,6 +54,17 @@ namespace Common
 
         public static int AddUser(string deviceId, WebSocket playerWebSocket)
         {
+            if (playerWebSocket == null)
+            {
+                throw new ArgumentNullException(nameof(playerWebSocket), "WebSocket cannot be null");
+            }
+
+            // Check if the WebSocket is already associated with another user
+            if (_players.Values.Any(player => player.WebSocket == playerWebSocket))
+            {
+                throw new InvalidOperationException("WebSocket is already associated with another user");
+            }
+
             // Create a new player state
             int playerID = idCounter++;
             var playerState = new PlayerState(playerID, deviceId, playerWebSocket);
@@ -77,9 +88,26 @@ namespace Common
         {
             var playerToUpdate = GetUserByWebSocket(playerWebSocket);
 
-            int? newBalance = playerToUpdate?.UpdateResource(resourceType, resourceValue);
+            if (playerToUpdate != null)
+            {
+                int? newBalance = playerToUpdate.UpdateResource(resourceType, resourceValue);
+                return newBalance;
+            }
+            else
+            {
+                // Handle the case where the player to update is not found
+                throw new InvalidOperationException("User not found for WebSocket during resource update");
+            }
+        }
 
-            return newBalance;
+        public static void LogoutAllUsers()
+        {
+            foreach (var item in _players.Values)
+            {
+                item.WebSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+            }
+
+            _players.Clear();
         }
     }
 }
