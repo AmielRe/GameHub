@@ -16,7 +16,7 @@ namespace Common.Messages
             this.UDID = UDID;
         }
 
-        override public void Handle(WebSocket returnWebSocket)
+        override public void ProcessAndRespond(WebSocket returnWebSocket)
         {
             int playerID = GameData.loginUser(this.UDID);
 
