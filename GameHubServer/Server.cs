@@ -15,6 +15,9 @@ using Newtonsoft.Json;
 
 namespace GameHubClient
 {
+    /// <summary>
+    /// Represents a WebSocket server for handling game-related communication.
+    /// </summary>
     public class Server
     {
         private readonly HttpListener _httpListener;
@@ -22,6 +25,10 @@ namespace GameHubClient
         private readonly List<Type> _messageTypes;
         private const string COMMON_ASSEMBLY_NAME = "Common";
 
+        /// <summary>
+        /// Initializes a new instance of the Server class.
+        /// </summary>
+        /// <param name="url">The URL on which the server should listen.</param>
         public Server(string url)
         {
             _httpListener = new HttpListener();
@@ -36,6 +43,9 @@ namespace GameHubClient
                     .ToList();
         }
 
+        /// <summary>
+        /// Starts the server and listens for WebSocket connections.
+        /// </summary>
         public async Task StartAsync()
         {
             try
@@ -55,6 +65,7 @@ namespace GameHubClient
                     }
                     else
                     {
+                        // Respond with a 400 Bad Request for non-WebSocket requests
                         context.Response.StatusCode = 400;
                         context.Response.Close();
                     }
@@ -70,6 +81,10 @@ namespace GameHubClient
             }
         }
 
+        /// <summary>
+        /// Handles WebSocket communication with a connected client.
+        /// </summary>
+        /// <param name="webSocket">The WebSocket associated with the connected client.</param>
         private async Task HandleClient(WebSocket webSocket)
         {
             try
@@ -85,6 +100,7 @@ namespace GameHubClient
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cts.Token);
                 }
 
+                // Logout the user when the WebSocket connection is closed
                 GameData.LogoutUser(webSocket);
             }
             catch (WebSocketException ex)
@@ -99,6 +115,11 @@ namespace GameHubClient
             }
         }
 
+        /// <summary>
+        /// Handles incoming WebSocket messages.
+        /// </summary>
+        /// <param name="msg">The incoming WebSocket message.</param>
+        /// <param name="webSocket">The WebSocket associated with the connected client.</param>
         public void HandleWebSocketMessage(string msg, WebSocket webSocket)
         {
             try
@@ -133,6 +154,9 @@ namespace GameHubClient
             }
         }
 
+        /// <summary>
+        /// Stops the server and logs out all connected users.
+        /// </summary>
         public void Stop()
         {
             GameData.LogoutAllUsers();

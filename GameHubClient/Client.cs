@@ -9,10 +9,18 @@ using Common.Enums;
 
 namespace GameHubClient
 {
+    /// <summary>
+    /// Represents a client for interacting with a game server via WebSocket.
+    /// </summary>
     public class Client
     {
+        /// <summary>
+        /// The entry point of the client application.
+        /// </summary>
+        /// <param name="args">Command-line arguments (unused).</param>
         static async Task Main(string[] args)
         {
+            // Establish WebSocket connection to the game server
             ClientWebSocket webSocket = Connect("ws://localhost:8080/").Result;
             string playerId = null;
 
@@ -40,7 +48,10 @@ namespace GameHubClient
 
                             try
                             {
+                                // Send login message to the server
                                 await CommunicationUtils.Send(webSocket, loginMsg);
+
+                                // Receive and set the player ID from the server
                                 playerId = CommunicationUtils.Receive(webSocket).Result;
                             }
                             catch (Exception ex)
@@ -59,7 +70,10 @@ namespace GameHubClient
 
                                 try
                                 {
+                                    // Send resource update message to the server
                                     await CommunicationUtils.Send(webSocket, updateResourcesMsg);
+
+                                    // Receive and display the new resource balance from the server
                                     string newBalance = CommunicationUtils.Receive(webSocket).Result;
                                 }
                                 catch (Exception ex)
@@ -85,7 +99,10 @@ namespace GameHubClient
 
                                 try
                                 {
+                                    // Send gift message to the server
                                     await CommunicationUtils.Send(webSocket, sendGiftMsg);
+
+                                    // Receive and display the server's response
                                     string response = CommunicationUtils.Receive(webSocket).Result;
                                 }
                                 catch (Exception ex)
@@ -114,6 +131,11 @@ namespace GameHubClient
             }
         }
 
+        /// <summary>
+        /// Establishes a WebSocket connection to the specified URI.
+        /// </summary>
+        /// <param name="uri">The URI of the WebSocket server.</param>
+        /// <returns>A connected WebSocket instance.</returns>
         public static async Task<ClientWebSocket> Connect(string uri)
         {
             ClientWebSocket webSocket = null;
@@ -122,6 +144,7 @@ namespace GameHubClient
             {
                 webSocket = new ClientWebSocket();
 
+                // Connect to the WebSocket server
                 await webSocket.ConnectAsync(new Uri(uri), CancellationToken.None);
             }
             catch (Exception ex)
@@ -133,6 +156,10 @@ namespace GameHubClient
             return webSocket;
         }
 
+        /// <summary>
+        /// Prompts the user to choose a resource type from the available options.
+        /// </summary>
+        /// <returns>The chosen resource type.</returns>
         static ResourceType PromptForResourceType()
         {
             Console.WriteLine("Choose a resource type:");
@@ -154,6 +181,11 @@ namespace GameHubClient
             return (ResourceType)(choice - 1);
         }
 
+        /// <summary>
+        /// Prompts the user to enter a resource value.
+        /// </summary>
+        /// <param name="allowNegative">Specifies whether negative values are allowed.</param>
+        /// <returns>The entered resource value.</returns>
         static int PromptForResourceValue(bool allowNegative = true)
         {
             Console.WriteLine("Enter the resource value:");
@@ -166,6 +198,10 @@ namespace GameHubClient
             return value;
         }
 
+        /// <summary>
+        /// Prompts the user to enter a friend's ID.
+        /// </summary>
+        /// <returns>The entered friend's ID.</returns>
         static int PromptForFriendId()
         {
             Console.WriteLine("Enter the friend id:");
