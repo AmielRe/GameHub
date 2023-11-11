@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Common.Enums;
+using Common.Models;
+using System.Collections.Concurrent;
+using System.Net.WebSockets;
+using System.Numerics;
 
 namespace Common
 {
     public sealed class GameData
     {
-        private static GameData instance = null;
-        private static readonly object padlock = new object();
-        private static Dictionary<string, int> _connectedClients = new Dictionary<string, int>();
+        private static GameData? instance;
+        private static readonly object padlock = new();
+        private static readonly ConcurrentDictionary<int, PlayerState> _players = new();
 
         GameData()
         {
-            _connectedClients.Clear();
+            _players.Clear();
         }
 
         public static GameData Instance
@@ -23,31 +23,53 @@ namespace Common
             {
                 lock (padlock)
                 {
-                    if (instance == null)
-                    {
-                        instance = new GameData();
-                    }
+                    instance ??= new GameData();
                     return instance;
                 }
             }
         }
 
-        public static int loginUser(string UDID)
+        public static int LoginUser(string deviceId, WebSocket playerWebSocket)
         {
-            if(string.IsNullOrEmpty(UDID))
+            if(string.IsNullOrEmpty(deviceId))
             {
                 throw new ArgumentException("Argument is invalid");
             }
 
-            if(_connectedClients.TryGetValue(UDID, out int playerID))
+            // Check if the player is already connected
+            var existingPlayer = _players.Values.FirstOrDefault(player => player.DeviceId == deviceId);
+            if (existingPlayer != null)
             {
-                return playerID;
+                // Respond accordingly if the player is already connected
+                return existingPlayer.PlayerId;
             }
 
-            playerID = Guid.NewGuid().GetHashCode();
-            _connectedClients.Add(UDID, playerID);
+            // Create a new player state
+            int playerID = Guid.NewGuid().GetHashCode();
+            var playerState = new PlayerState(playerID, deviceId, playerWebSocket);
+
+            _players.TryAdd(playerID, playerState);
 
             return playerID;
+        }
+
+        public static void LogoutUser(WebSocket playerWebSocket)
+        {
+            var playerToLogout = _players.Values.FirstOrDefault(player => player.WebSocket == playerWebSocket);
+
+            if(playerToLogout != null)
+            {
+                _players.TryRemove(playerToLogout.PlayerId, out playerToLogout);
+            }
+        }
+
+        public static int? UpdateResource(WebSocket playerWebSocket, ResourceType resourceType, int resourceValue)
+        {
+            var playerToUpdate = _players.Values.FirstOrDefault(player => player.WebSocket == playerWebSocket);
+
+            int? newBalance = playerToUpdate?.UpdateResource(resourceType, resourceValue);
+
+            return newBalance;
         }
     }
 }
