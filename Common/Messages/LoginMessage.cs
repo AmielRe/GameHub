@@ -7,25 +7,25 @@ namespace Common.Messages
     [Message("Login")]
     public class LoginMessage : Message
     {
-        public string UDID;
+        public string deviceId;
 
         public LoginMessage() { }
 
-        public LoginMessage(string UDID)
+        public LoginMessage(string deviceId)
         {
-            this.UDID = UDID;
+            this.deviceId = deviceId;
         }
 
         override public void ProcessAndRespond(WebSocket returnWebSocket)
         {
-            int playerID = GameData.loginUser(this.UDID);
+            int playerID = GameData.LoginUser(deviceId, returnWebSocket);
 
             _ = CommunicationUtils.Send(returnWebSocket, playerID.ToString());
         }
 
         public override void InitializeParams(dynamic message)
         {
-            this.UDID = message.UDID;
+            deviceId = message.deviceId;
         }
     }
 }

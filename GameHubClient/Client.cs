@@ -5,6 +5,7 @@ using System.Threading;
 using Common.Utils;
 using Newtonsoft.Json;
 using Common.Messages;
+using Common.Enums;
 
 namespace GameHubClient
 {
@@ -32,7 +33,7 @@ namespace GameHubClient
                     {
                         case 1:
                             string ipAddress = NetworkUtils.GetIPv4Address();
-                            LoginMessage login = new LoginMessage(ipAddress);
+                            LoginMessage login = new(ipAddress);
 
                             string loginMsg = JsonConvert.SerializeObject(login);
 
@@ -43,11 +44,17 @@ namespace GameHubClient
                         case 2:
                             if(playerId != null)
                             {
-                                UpdateResourcesMessage updateResources = new UpdateResourcesMessage();
+                                ResourceType chosenResourceType = PromptForResourceType();
+                                int chosenResourceValue = PromptForResourceValue();
+                                UpdateResourcesMessage updateResources = new(int.Parse(playerId), chosenResourceType, chosenResourceValue);
 
                                 string updateResourcesMsg = JsonConvert.SerializeObject(updateResources);
 
+                                Console.WriteLine(updateResourcesMsg);
+
                                 await CommunicationUtils.Send(webSocket, updateResourcesMsg);
+
+                                string newBalance = CommunicationUtils.Receive(webSocket).Result;
                             }
                             else
                             {
@@ -57,7 +64,7 @@ namespace GameHubClient
                         case 3:
                             if (playerId != null)
                             {
-                                SendGiftMessage sendGift = new SendGiftMessage();
+                                SendGiftMessage sendGift = new();
 
                                 string sendGiftMsg = JsonConvert.SerializeObject(sendGift);
 
@@ -101,5 +108,39 @@ namespace GameHubClient
 
             return webSocket;
         }
+
+        static ResourceType PromptForResourceType()
+        {
+            Console.WriteLine("Choose a resource type:");
+
+            // Dynamically display enum values
+            int enumIndex = 1;
+            foreach (var resourceType in Enum.GetNames(typeof(ResourceType)))
+            {
+                Console.WriteLine($"{enumIndex}. {resourceType}");
+                enumIndex++;
+            }
+
+            int choice;
+            while (!int.TryParse(Console.ReadLine(), out choice) || choice < 1 || choice > enumIndex - 1)
+            {
+                Console.WriteLine($"Invalid choice. Please enter a number between 1 and {enumIndex - 1}.");
+            }
+
+            return (ResourceType)(choice - 1);
+        }
+
+        static int PromptForResourceValue()
+        {
+            Console.WriteLine("Enter the resource value:");
+            int value;
+            while (!int.TryParse(Console.ReadLine(), out value))
+            {
+                Console.WriteLine("Invalid input. Please enter an integer.");
+            }
+
+            return value;
+        }
+
     }
 }

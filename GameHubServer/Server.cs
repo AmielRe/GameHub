@@ -10,15 +10,15 @@ using System.Reflection;
 using System.Linq;
 using Common.Attributes;
 using Common.Messages;
+using Common;
 
 namespace GameHubClient
 {
     public class Server
     {
-        private HttpListener _httpListener;
-        private CancellationTokenSource _cts;
-        private Dictionary<int, WebSocket> _connectedClients = new Dictionary<int, WebSocket>();
-        private List<Type> _messageTypes;
+        private readonly HttpListener _httpListener;
+        private readonly CancellationTokenSource _cts;
+        private readonly List<Type> _messageTypes;
         private const string COMMON_ASSEMBLY_NAME = "Common";
 
         public Server(string url)
@@ -47,10 +47,8 @@ namespace GameHubClient
                 if (context.Request.IsWebSocketRequest)
                 {
                     var wsContext = await context.AcceptWebSocketAsync(subProtocol: null);
-                    int playerId = Guid.NewGuid().GetHashCode();
-                    _connectedClients[playerId] = wsContext.WebSocket;
 
-                    _ = Task.Run(async () => await HandleClient(playerId, wsContext.WebSocket));
+                    _ = Task.Run(async () => await HandleClient(wsContext.WebSocket));
                 }
                 else
                 {
@@ -60,7 +58,7 @@ namespace GameHubClient
             }
         }
 
-        private async Task HandleClient(int playerId, WebSocket webSocket)
+        private async Task HandleClient(WebSocket webSocket)
         {
             try
             {
@@ -75,13 +73,13 @@ namespace GameHubClient
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cts.Token);
                 }
 
-                _connectedClients.Remove(playerId);
+                GameData.LogoutUser(webSocket);
             }
             catch (Exception ex)
             {
                 // Handle exceptions and disconnect client
                 Console.WriteLine($"Error: {ex.Message}");
-                _connectedClients.Remove(playerId);
+                GameData.LogoutUser(webSocket);
             }
         }
 
