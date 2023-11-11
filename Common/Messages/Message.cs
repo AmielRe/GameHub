@@ -21,7 +21,15 @@ namespace Common.Messages
             }
         }
 
-        public abstract void Handle(WebSocket returnWebSocket);
+        public void Handle(dynamic message, WebSocket returnWebSocket)
+        {
+            InitializeParams(message);
+
+            ProcessAndRespond(returnWebSocket);
+        }
+
         public abstract void InitializeParams(dynamic message);
+
+        public abstract void ProcessAndRespond(WebSocket returnWebSocket);
     }
 }

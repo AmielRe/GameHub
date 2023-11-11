@@ -7,12 +7,13 @@ namespace Common.Messages
     public class SendGiftMessage : Message
     {
         public SendGiftMessage() { }
-        override public void Handle(WebSocket returnWebSocket)
+
+        public override void InitializeParams(dynamic message)
         {
             throw new NotImplementedException();
         }
 
-        public override void InitializeParams(dynamic message)
+        public override void ProcessAndRespond(WebSocket returnWebSocket)
         {
             throw new NotImplementedException();
         }
