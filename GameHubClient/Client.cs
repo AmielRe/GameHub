@@ -33,6 +33,7 @@ namespace GameHubClient
                     {
                         case 1:
                             string ipAddress = NetworkUtils.GetIPv4Address();
+
                             LoginMessage login = new(ipAddress);
 
                             string loginMsg = JsonConvert.SerializeObject(login);
@@ -46,7 +47,7 @@ namespace GameHubClient
                             {
                                 ResourceType chosenResourceType = PromptForResourceType();
                                 int chosenResourceValue = PromptForResourceValue();
-                                UpdateResourcesMessage updateResources = new(int.Parse(playerId), chosenResourceType, chosenResourceValue);
+                                UpdateResourcesMessage updateResources = new(chosenResourceType, chosenResourceValue);
 
                                 string updateResourcesMsg = JsonConvert.SerializeObject(updateResources);
 
@@ -64,11 +65,17 @@ namespace GameHubClient
                         case 3:
                             if (playerId != null)
                             {
-                                SendGiftMessage sendGift = new();
+                                ResourceType chosenResourceType = PromptForResourceType();
+                                int chosenResourceValue = PromptForResourceValue(false);
+                                int friendId = PromptForFriendId();
+
+                                SendGiftMessage sendGift = new(friendId, chosenResourceType, chosenResourceValue);
 
                                 string sendGiftMsg = JsonConvert.SerializeObject(sendGift);
 
                                 await CommunicationUtils.Send(webSocket, sendGiftMsg);
+
+                                string response = CommunicationUtils.Receive(webSocket).Result;
                             }
                             else
                             {
@@ -130,17 +137,28 @@ namespace GameHubClient
             return (ResourceType)(choice - 1);
         }
 
-        static int PromptForResourceValue()
+        static int PromptForResourceValue(bool allowNegative = true)
         {
             Console.WriteLine("Enter the resource value:");
             int value;
-            while (!int.TryParse(Console.ReadLine(), out value))
+            while (!int.TryParse(Console.ReadLine(), out value) || (!allowNegative && value < 0))
             {
-                Console.WriteLine("Invalid input. Please enter an integer.");
+                Console.WriteLine("Invalid input. Please enter a valid integer.");
             }
 
             return value;
         }
 
+        static int PromptForFriendId()
+        {
+            Console.WriteLine("Enter the friend id:");
+            int value;
+            while (!int.TryParse(Console.ReadLine(), out value) || value < 0)
+            {
+                Console.WriteLine("Invalid input. Please enter a valid non negative integer.");
+            }
+
+            return value;
+        }
     }
 }
