@@ -1,5 +1,6 @@
 ﻿using Common.Attributes;
 using Common.Enums;
+using Common.Models;
 using Common.Utils;
 using System.Net.WebSockets;
 
@@ -8,36 +9,30 @@ namespace Common.Messages
     [Message("UpdateResources")]
     public class UpdateResourcesMessage : Message
     {
-        public int playerId;
         public ResourceType resourceType;
         public int resourceValue;
 
         public UpdateResourcesMessage() { }
 
-        public UpdateResourcesMessage(int playerId, ResourceType resourceType, int resourceValue)
+        public UpdateResourcesMessage(ResourceType resourceType, int resourceValue)
         {
-            this.playerId = playerId;
             this.resourceType = resourceType;
             this.resourceValue = resourceValue;
         }
 
         public override void InitializeParams(dynamic message)
         {
-            playerId = message.playerId;
             resourceType = message.resourceType;
             resourceValue = message.resourceValue;
         }
 
         public override void ProcessAndRespond(WebSocket returnWebSocket)
         {
-            int? newBalance = GameData.UpdateResource(returnWebSocket, resourceType, resourceValue);
+            PlayerState? playerState = GameData.GetUserByWebSocket(returnWebSocket) ?? throw new Exception("Player was not found!");
 
-            if (!newBalance.HasValue)
-            {
-                newBalance = 0;
-            }
+            int newBalance = playerState.UpdateResource(resourceType, resourceValue);
 
-            _ = CommunicationUtils.Send(returnWebSocket, newBalance.Value.ToString());
+            _ = CommunicationUtils.Send(returnWebSocket, newBalance.ToString());
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Common.Attributes;
+using Common.Models;
 using Common.Utils;
 using System.Net.WebSockets;
 
@@ -18,9 +19,19 @@ namespace Common.Messages
 
         override public void ProcessAndRespond(WebSocket returnWebSocket)
         {
-            int playerID = GameData.LoginUser(deviceId, returnWebSocket);
+            PlayerState? playerState = GameData.GetUserByDeviceId(deviceId);
+            int playerId;
 
-            _ = CommunicationUtils.Send(returnWebSocket, playerID.ToString());
+            if (playerState != null)
+            {
+                playerId = playerState.PlayerId;
+            }
+            else
+            {
+                playerId = GameData.AddUser(deviceId, returnWebSocket);
+            }
+
+            _ = CommunicationUtils.Send(returnWebSocket, playerId.ToString());
         }
 
         public override void InitializeParams(dynamic message)

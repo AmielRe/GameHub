@@ -2,12 +2,12 @@
 using Common.Models;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using System.Numerics;
 
 namespace Common
 {
     public sealed class GameData
     {
+        private static int idCounter = 0;
         private static GameData? instance;
         private static readonly object padlock = new();
         private static readonly ConcurrentDictionary<int, PlayerState> _players = new();
@@ -29,23 +29,33 @@ namespace Common
             }
         }
 
-        public static int LoginUser(string deviceId, WebSocket playerWebSocket)
+        public static PlayerState? GetUserByDeviceId(string deviceId)
         {
-            if(string.IsNullOrEmpty(deviceId))
+            if (string.IsNullOrEmpty(deviceId))
             {
                 throw new ArgumentException("Argument is invalid");
             }
 
             // Check if the player is already connected
             var existingPlayer = _players.Values.FirstOrDefault(player => player.DeviceId == deviceId);
-            if (existingPlayer != null)
-            {
-                // Respond accordingly if the player is already connected
-                return existingPlayer.PlayerId;
-            }
 
+            return existingPlayer;
+        }
+
+        public static PlayerState? GetUserByWebSocket(WebSocket webSocket)
+        {
+            return _players.Values.FirstOrDefault(player => player.WebSocket == webSocket);
+        }
+
+        public static PlayerState? GetUserByPlayerId(int playerId)
+        {
+            return _players.Values.FirstOrDefault(player => player.PlayerId == playerId);
+        }
+
+        public static int AddUser(string deviceId, WebSocket playerWebSocket)
+        {
             // Create a new player state
-            int playerID = Guid.NewGuid().GetHashCode();
+            int playerID = idCounter++;
             var playerState = new PlayerState(playerID, deviceId, playerWebSocket);
 
             _players.TryAdd(playerID, playerState);
@@ -55,9 +65,9 @@ namespace Common
 
         public static void LogoutUser(WebSocket playerWebSocket)
         {
-            var playerToLogout = _players.Values.FirstOrDefault(player => player.WebSocket == playerWebSocket);
+            var playerToLogout = GetUserByWebSocket(playerWebSocket);
 
-            if(playerToLogout != null)
+            if (playerToLogout != null)
             {
                 _players.TryRemove(playerToLogout.PlayerId, out playerToLogout);
             }
@@ -65,7 +75,7 @@ namespace Common
 
         public static int? UpdateResource(WebSocket playerWebSocket, ResourceType resourceType, int resourceValue)
         {
-            var playerToUpdate = _players.Values.FirstOrDefault(player => player.WebSocket == playerWebSocket);
+            var playerToUpdate = GetUserByWebSocket(playerWebSocket);
 
             int? newBalance = playerToUpdate?.UpdateResource(resourceType, resourceValue);
 
