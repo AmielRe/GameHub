@@ -1,19 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Common.Utils
 {
+    /// <summary>
+    /// Utility class for network-related operations.
+    /// </summary>
     public static class NetworkUtils
     {
+        /// <summary>
+        /// Retrieves the IPv4 address of the machine from the available network interfaces.
+        /// </summary>
+        /// <returns>The IPv4 address of the machine.</returns>
+        /// <exception cref="Exception">Thrown when no valid IPv4 address is found or an error occurs during retrieval.</exception>
         public static string GetIPv4Address()
         {
             try
-            { 
+            {
                 string ipv4Address = null;
                 NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 
@@ -51,9 +55,9 @@ namespace Common.Utils
             }
             catch (Exception ex)
             {
+                // Handle exceptions that might occur during IPv4 address retrieval
                 throw new Exception($"Error retrieving IPv4 address: {ex.Message}");
             }
         }
-
     }
 }

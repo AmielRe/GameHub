@@ -2,17 +2,39 @@
 using Common.Enums;
 using Common.Models;
 using Common.Utils;
+using System;
 using System.Net.WebSockets;
 
 namespace Common.Messages
 {
+    /// <summary>
+    /// Represents a message for sending a gift between players.
+    /// </summary>
     [Message("SendGift")]
     public class SendGiftMessage : Message
     {
+        /// <summary>
+        /// Gets or sets the player ID of the friend who will receive the gift.
+        /// </summary>
         public int friendPlayerId;
+
+        /// <summary>
+        /// Gets or sets the type of resource to be sent as a gift.
+        /// </summary>
         public ResourceType resourceType;
+
+        /// <summary>
+        /// Gets or sets the value of the resource to be sent as a gift.
+        /// </summary>
         public int resourceValue;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SendGiftMessage"/> class with the specified parameters.
+        /// </summary>
+        /// <param name="friendPlayerId">The player ID of the friend who will receive the gift.</param>
+        /// <param name="resourceType">The type of resource to be sent as a gift.</param>
+        /// <param name="resourceValue">The value of the resource to be sent as a gift.</param>
+        /// <exception cref="ArgumentException">Thrown if any of the parameters are invalid (negative friend player ID, invalid resource type, or negative resource value).</exception>
         public SendGiftMessage(int friendPlayerId, ResourceType resourceType, int resourceValue)
         {
             if (friendPlayerId < 0)
@@ -35,8 +57,12 @@ namespace Common.Messages
             this.resourceValue = resourceValue;
         }
 
+        /// <summary>
+        /// Default constructor for <see cref="SendGiftMessage"/>.
+        /// </summary>
         public SendGiftMessage() { }
 
+        /// <inheritdoc/>
         public override void InitializeParams(dynamic message)
         {
             if (Convert.ToInt32(message?.friendPlayerId) < 0 || !Enum.IsDefined(typeof(ResourceType), message?.resourceType) || Convert.ToInt32(message?.resourceValue) < 0)
@@ -49,12 +75,13 @@ namespace Common.Messages
             resourceValue = message.resourceValue;
         }
 
+        /// <inheritdoc/>
         public override void ProcessAndRespond(WebSocket returnWebSocket)
         {
             try
             {
                 PlayerState? sendingUser = GameData.GetUserByWebSocket(returnWebSocket) ?? throw new Exception("Sending user was not found!");
-                if(!sendingUser.Resources.TryGetValue(resourceType, out int currentBalance) || (currentBalance - resourceValue >= 0))
+                if (!sendingUser.Resources.TryGetValue(resourceType, out int currentBalance) || (currentBalance - resourceValue >= 0))
                 {
                     throw new InvalidOperationException("Invalid balance for required operation!");
                 }
@@ -72,6 +99,7 @@ namespace Common.Messages
             }
             catch (Exception ex)
             {
+                // Handle exceptions during message processing
                 throw new Exception($"Error processing send gift message: {ex.Message}");
             }
         }
