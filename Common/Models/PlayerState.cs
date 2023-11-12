@@ -39,6 +39,12 @@ namespace Common.Models
             PlayerId = playerId;
             DeviceId = deviceId;
             WebSocket = webSocket;
+
+            // Initialize Resources with enum values and 0 as the initial value
+            foreach (ResourceType resourceType in Enum.GetValues(typeof(ResourceType)))
+            {
+                Resources[resourceType] = 0;
+            }
         }
 
         /// <summary>
@@ -49,14 +55,7 @@ namespace Common.Models
         /// <returns>The new balance of the updated resource.</returns>
         public int UpdateResource(ResourceType type, int value)
         {
-            if (Resources.ContainsKey(type))
-            {
-                Resources[type] += value;
-            }
-            else
-            {
-                Resources[type] = value;
-            }
+            Resources[type] += value;
 
             return Resources[type];
         }

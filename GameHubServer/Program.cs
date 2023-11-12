@@ -1,4 +1,5 @@
-﻿using GameHubClient;
+﻿using Common;
+using GameHubClient;
 using System;
 
 namespace GameHubServer
@@ -7,7 +8,7 @@ namespace GameHubServer
     {
         static void Main(string[] args)
         {
-            Server websocketServer = new Server("http://localhost:8080/");
+            Server websocketServer = new($"http://{Constants.SERVER_HOST}:{Constants.SERVER_PORT}/");
 
             _ = websocketServer.StartAsync();
 
