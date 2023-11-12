@@ -8,7 +8,6 @@ Basic server and client game infrastructure.
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [Installation](#installation)
-  - [Configuration](#configuration)
 - [Usage](#usage)
 - [Authors](#authors)
 
@@ -43,10 +42,6 @@ Follow the following steps to run the application locally
    ```bash
    cd GameHub
    ```
-
-### Configuration
-
-Will be written later...
 
 ## Usage
 
