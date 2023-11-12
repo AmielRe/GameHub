@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
+using Common.Utils;
 
 namespace GameHubClient
 {
@@ -50,10 +51,10 @@ namespace GameHubClient
                             // add a logging target for warnings and higher severity  logs
                             // structured in JSON format
                             .WriteTo.File(new JsonFormatter(),
-                                          "important.json",
+                                          Constants.IMPORTANT_LOGS_FILE_NAME,
                                           restrictedToMinimumLevel: LogEventLevel.Warning)
                             // add a rolling file for all logs
-                            .WriteTo.File("all-.logs",
+                            .WriteTo.File(Constants.REGULAR_LOGS_FILE_NAME,
                                           rollingInterval: RollingInterval.Day)
                             // set default minimum level
                             .MinimumLevel.Debug()
@@ -77,6 +78,8 @@ namespace GameHubClient
                     if (context.Request.IsWebSocketRequest)
                     {
                         var wsContext = await context.AcceptWebSocketAsync(subProtocol: null);
+
+                        Log.Information($"New client connected.");
 
                         _ = Task.Run(async () => await HandleClient(wsContext.WebSocket));
                     }
@@ -142,6 +145,8 @@ namespace GameHubClient
         {
             try
             {
+                Log.Debug($"Received message: {msg}");
+
                 // Parse the incoming message to determine the command type
                 dynamic msgObject = JsonConvert.DeserializeObject(msg);
                 string commandType = msgObject.MsgType;
@@ -160,15 +165,18 @@ namespace GameHubClient
                 {
                     // Handle unknown command types
                     Log.Warning($"Unknown command type: {commandType}");
+                    _ = CommunicationUtils.Send(webSocket, $"Unknown command type: {commandType}");
                 }
             }
             catch (JsonException ex)
             {
                 Log.Error($"Error deserializing JSON: {ex.Message}");
+                _ = CommunicationUtils.Send(webSocket, $"Internal server error: {ex.Message}");
             }
             catch(Exception ex)
             {
                 Log.Error($"Error handling incoming message: {ex.Message}");
+                _ = CommunicationUtils.Send(webSocket, $"Internal server error: {ex.Message}");
             }
         }
 
@@ -177,6 +185,7 @@ namespace GameHubClient
         /// </summary>
         public void Stop()
         {
+            Log.Debug("Closing all client connections and shuting down.");
             GameData.LogoutAllUsers();
             _httpListener.Stop();
             _cts?.Cancel();

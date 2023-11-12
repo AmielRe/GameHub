@@ -9,6 +9,7 @@ using Common.Enums;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using Serilog;
+using Common;
 
 namespace GameHubClient
 {
@@ -28,17 +29,17 @@ namespace GameHubClient
                             // add a logging target for warnings and higher severity  logs
                             // structured in JSON format
                             .WriteTo.File(new JsonFormatter(),
-                                          "important.json",
+                                          Constants.IMPORTANT_LOGS_FILE_NAME,
                                           restrictedToMinimumLevel: LogEventLevel.Warning)
                             // add a rolling file for all logs
-                            .WriteTo.File("all-.logs",
+                            .WriteTo.File(Constants.REGULAR_LOGS_FILE_NAME,
                                           rollingInterval: RollingInterval.Day)
                             // set default minimum level
                             .MinimumLevel.Debug()
                             .CreateLogger();
 
             // Establish WebSocket connection to the game server
-            ClientWebSocket webSocket = Connect("ws://localhost:8080/").Result;
+            ClientWebSocket webSocket = Connect($"ws://{Constants.SERVER_HOST}:{Constants.SERVER_PORT}/").Result;
             string playerId = null;
 
             while (true)
@@ -57,8 +58,8 @@ namespace GameHubClient
                     switch (choice)
                     {
                         case 1:
-                            string ipAddress = NetworkUtils.GetIPv4Address();
-
+                            //string ipAddress = NetworkUtils.GetIPv4Address();
+                            string ipAddress = Console.ReadLine();
                             LoginMessage login = new(ipAddress);
 
                             string loginMsg = JsonConvert.SerializeObject(login);
@@ -92,6 +93,8 @@ namespace GameHubClient
 
                                     // Receive and display the new resource balance from the server
                                     string newBalance = CommunicationUtils.Receive(webSocket).Result;
+
+                                    Log.Information($"New balance: {newBalance}");
                                 }
                                 catch (Exception ex)
                                 {
@@ -121,6 +124,8 @@ namespace GameHubClient
 
                                     // Receive and display the server's response
                                     string response = CommunicationUtils.Receive(webSocket).Result;
+
+                                    Log.Information($"Server response: {response}");
                                 }
                                 catch (Exception ex)
                                 {
