@@ -48,7 +48,7 @@ namespace Common.Messages
         /// <inheritdoc/>
         public override void InitializeParams(dynamic message)
         {
-            if (!Enum.IsDefined(typeof(ResourceType), message?.resourceType))
+            if (!Enum.IsDefined(typeof(ResourceType), (int?)message?.resourceType))
             {
                 throw new ArgumentException("Invalid parameters for initializing UpdateResourcesMessage", nameof(message));
             }
@@ -63,7 +63,7 @@ namespace Common.Messages
             try
             {
                 PlayerState? playerState = GameData.GetUserByWebSocket(returnWebSocket) ?? throw new Exception("Player was not found!");
-                if (!playerState.Resources.TryGetValue(resourceType, out int currentBalance) || (currentBalance + resourceValue >= 0))
+                if (!playerState.Resources.TryGetValue(resourceType, out int currentBalance) || (currentBalance + resourceValue < 0))
                 {
                     throw new InvalidOperationException("Invalid balance for required operation!");
                 }
