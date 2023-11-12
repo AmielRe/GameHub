@@ -160,8 +160,7 @@ namespace GameHubClient
         /// <returns>A connected WebSocket instance.</returns>
         public static async Task<ClientWebSocket> Connect(string uri)
         {
-            ClientWebSocket webSocket = null;
-
+            ClientWebSocket webSocket;
             try
             {
                 webSocket = new ClientWebSocket();

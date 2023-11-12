@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Common.Attributes
+﻿namespace Common.Attributes
 {
     /// <summary>
     /// Attribute used to associate a message type with a class implementing a message in the system.
