@@ -6,6 +6,9 @@ using Common.Utils;
 using Newtonsoft.Json;
 using Common.Messages;
 using Common.Enums;
+using Serilog.Events;
+using Serilog.Formatting.Json;
+using Serilog;
 
 namespace GameHubClient
 {
@@ -20,6 +23,20 @@ namespace GameHubClient
         /// <param name="args">Command-line arguments (unused).</param>
         static async Task Main(string[] args)
         {
+            // Configure logger
+            Log.Logger = new LoggerConfiguration()
+                            // add a logging target for warnings and higher severity  logs
+                            // structured in JSON format
+                            .WriteTo.File(new JsonFormatter(),
+                                          "important.json",
+                                          restrictedToMinimumLevel: LogEventLevel.Warning)
+                            // add a rolling file for all logs
+                            .WriteTo.File("all-.logs",
+                                          rollingInterval: RollingInterval.Day)
+                            // set default minimum level
+                            .MinimumLevel.Debug()
+                            .CreateLogger();
+
             // Establish WebSocket connection to the game server
             ClientWebSocket webSocket = Connect("ws://localhost:8080/").Result;
             string playerId = null;
@@ -56,7 +73,7 @@ namespace GameHubClient
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine("Communication error: {0}", ex.Message);
+                                Log.Error("Communication error: {0}", ex.Message);
                             }
                             break;
                         case 2:
@@ -83,7 +100,7 @@ namespace GameHubClient
                             }
                             else
                             {
-                                Console.WriteLine("Please login before trying to update a resource");
+                                Log.Error("Please login before trying to update a resource");
                             }
                             break;
                         case 3:
@@ -107,7 +124,7 @@ namespace GameHubClient
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine("Communication error: {0}", ex.Message);
+                                    Log.Error("Communication error: {0}", ex.Message);
                                 }
                             }
                             else
@@ -149,7 +166,7 @@ namespace GameHubClient
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to connect to: {0} - {1}", uri, ex.Message);
+                Log.Error("Failed to connect to: {0} - {1}", uri, ex.Message);
                 throw;
             }
 

@@ -12,6 +12,9 @@ using Common.Attributes;
 using Common.Messages;
 using Common;
 using Newtonsoft.Json;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
 
 namespace GameHubClient
 {
@@ -41,6 +44,20 @@ namespace GameHubClient
                     .GetTypes()
                     .Where(type => type.IsClass && !type.IsAbstract && type.GetCustomAttribute<MessageAttribute>() != null)
                     .ToList();
+
+            // Configure logger
+            Log.Logger = new LoggerConfiguration()
+                            // add a logging target for warnings and higher severity  logs
+                            // structured in JSON format
+                            .WriteTo.File(new JsonFormatter(),
+                                          "important.json",
+                                          restrictedToMinimumLevel: LogEventLevel.Warning)
+                            // add a rolling file for all logs
+                            .WriteTo.File("all-.logs",
+                                          rollingInterval: RollingInterval.Day)
+                            // set default minimum level
+                            .MinimumLevel.Debug()
+                            .CreateLogger();
         }
 
         /// <summary>
@@ -51,7 +68,7 @@ namespace GameHubClient
             try
             {
                 _httpListener.Start();
-                Console.WriteLine("Game Server is listening...");
+                Log.Information("Game Server is listening...");
 
                 while (true)
                 {
@@ -68,16 +85,17 @@ namespace GameHubClient
                         // Respond with a 400 Bad Request for non-WebSocket requests
                         context.Response.StatusCode = 400;
                         context.Response.Close();
+                        Log.Warning("Non web socket request denied");
                     }
                 }
             }
             catch (HttpListenerException ex)
             {
-                Console.WriteLine($"HTTP Listener error: {ex.Message}");
+                Log.Error($"HTTP Listener error: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error during server execution: {ex.Message}");
+                Log.Error($"Error during server execution: {ex.Message}");
             }
         }
 
@@ -105,12 +123,12 @@ namespace GameHubClient
             }
             catch (WebSocketException ex)
             {
-                Console.WriteLine($"WebSocket error: {ex.Message}");
+                Log.Error($"WebSocket error: {ex.Message}");
                 GameData.LogoutUser(webSocket);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Log.Error($"Error: {ex.Message}");
                 GameData.LogoutUser(webSocket);
             }
         }
@@ -141,16 +159,16 @@ namespace GameHubClient
                 else
                 {
                     // Handle unknown command types
-                    Console.WriteLine($"Unknown command type: {commandType}");
+                    Log.Warning($"Unknown command type: {commandType}");
                 }
             }
             catch (JsonException ex)
             {
-                Console.WriteLine($"Error deserializing JSON: {ex.Message}");
+                Log.Error($"Error deserializing JSON: {ex.Message}");
             }
             catch(Exception ex)
             {
-                Console.WriteLine($"Error handling incoming message: {ex.Message}");
+                Log.Error($"Error handling incoming message: {ex.Message}");
             }
         }
 
